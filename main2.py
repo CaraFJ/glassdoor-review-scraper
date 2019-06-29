@@ -25,17 +25,19 @@ import time
 import os
 import pandas as pd
 from argparse import ArgumentParser
-import logging
 import logging.config
 from selenium import webdriver as wd
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import selenium
 import numpy as np
 from schema import SCHEMA
 import json
 import urllib
 import datetime as dt
-import csv
 import pdb
+import re
 
 start = time.time()
 
@@ -270,7 +272,6 @@ def scrape(field, review, author):
 
 
 def extract_from_page():
-
     def is_featured(review):
         try:
             review.find_element_by_class_name('featuredFlag')
@@ -281,7 +282,6 @@ def extract_from_page():
     def extract_review(review):
         author = review.find_element_by_class_name('authorInfo')
         res = {}
-        # import pdb;pdb.set_trace()
         for field in SCHEMA:
             res[field] = scrape(field, review, author)
 
@@ -291,6 +291,8 @@ def extract_from_page():
     logger.info(f'Extracting reviews from page {page[0]}')
 
     res = pd.DataFrame([], columns=SCHEMA)
+
+    WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.CLASS_NAME, "empReview")))
 
     reviews = browser.find_elements_by_class_name('empReview')
     logger.info(f'Found {len(reviews)} reviews on page {page[0]}')
@@ -367,8 +369,6 @@ def sign_in():
     url = 'https://www.glassdoor.com/profile/login_input.htm'
     browser.get(url)
 
-    # import pdb;pdb.set_trace()
-
     email_field = browser.find_element_by_name('username')
     password_field = browser.find_element_by_name('password')
     submit_btn = browser.find_element_by_xpath('//button[@type="submit"]')
@@ -424,10 +424,20 @@ def write_segment_to_csv(res):
     logger.info(f'Writing {len(res)} reviews to file {args.file}')
     return pd.DataFrame([])
 
+
+def get_init_page():
+    match = re.match(r'.*P([0-9]+).*', args.url)
+    if match:
+        p = int(match.group(1))
+        logger.info('Initial page is {}'.format(p))
+        return [p]
+    else:
+        return [1]
+
 browser = get_browser()
 date_cut = dt.datetime.strptime('Jan 01, 2014', '%b %d, %Y')
 total_len = 0
-page = [1]
+page = get_init_page()
 idx = [0]
 date_limit_reached = [False]
 segment_num = int(args.segment)
@@ -440,7 +450,6 @@ def main():
     res = pd.DataFrame([], columns=SCHEMA)
 
     sign_in()
-
     if not args.start_from_url:
         reviews_exist = navigate_to_reviews()
         if not reviews_exist:
@@ -460,8 +469,6 @@ def main():
     reviews_df = extract_from_page()
     res = res.append(reviews_df)
 
-    # import pdb;pdb.set_trace()
-
     while more_pages() and\
             total_len < args.limit and\
             not date_limit_reached[0]:
@@ -473,8 +480,6 @@ def main():
         total_len += len(res)
         if len(res) >= segment_num:
             res = write_segment_to_csv(res)
-
-
 
     #res.to_csv(args.file, index=False, encoding='utf-8')
 
