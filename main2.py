@@ -330,6 +330,7 @@ def more_pages():
     except selenium.common.exceptions.NoSuchElementException:
         pass
     try: 
+        WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.TAG_NAME, "a")))
         next_.find_element_by_tag_name('a')
         return True
     except selenium.common.exceptions.NoSuchElementException:
