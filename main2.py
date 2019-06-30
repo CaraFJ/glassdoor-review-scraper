@@ -292,11 +292,10 @@ def extract_from_page():
 
     res = pd.DataFrame([], columns=SCHEMA)
 
-    WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.CLASS_NAME, "empReview")))
+    WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "empReview")))
 
     reviews = browser.find_elements_by_class_name('empReview')
     logger.info(f'Found {len(reviews)} reviews on page {page[0]}')
-
     for review in reviews:
         if not is_featured(review):
             data = extract_review(review)
@@ -331,7 +330,7 @@ def more_pages():
     except selenium.common.exceptions.NoSuchElementException:
         pass
     try: 
-        WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.TAG_NAME, "a")))
+        WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.TAG_NAME, "a")))
         next_.find_element_by_tag_name('a')
         return True
     except selenium.common.exceptions.NoSuchElementException:
@@ -485,8 +484,8 @@ def main():
         if not within_five_years():
             break
         reviews_df = extract_from_page()
+        total_len += len(reviews_df)
         res = res.append(reviews_df)
-        total_len += len(res)
         if len(res) >= segment_num:
             res = write_segment_to_csv(res)
 
