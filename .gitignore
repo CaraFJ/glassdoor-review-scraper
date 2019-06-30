@@ -1,5 +1,6 @@
 __pycache__
 chromedriver.exe
+chromedriver
 *.log
 design.txt
 *.csv
