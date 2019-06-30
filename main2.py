@@ -326,6 +326,7 @@ def more_pages():
     next_ = paging_control.find_element_by_class_name('pagination__PaginationStyle__next')
     try:
         next_.find_element_by_css_selector('a.pagination__ArrowStyle__disabled')
+        logger.info("Found pagination__ArrowStyle__disabled")
         return False
     except selenium.common.exceptions.NoSuchElementException:
         pass
@@ -334,11 +335,14 @@ def more_pages():
         next_.find_element_by_tag_name('a')
         return True
     except selenium.common.exceptions.NoSuchElementException:
+        logger.info("Next page not found")
         return False
     
 def within_five_years():
     date_str = browser.find_element_by_css_selector('time.date.subtle.small').text
     date = dt.datetime.strptime(date_str, '%b %d, %Y')
+    if date < date_cut:
+        logger.info("Records more than five years ago found. Exit")
     return date > date_cut
 
 def go_to_next_page():
@@ -387,7 +391,7 @@ def get_browser():
     if args.headless:
         chrome_options.add_argument('--headless')
     chrome_options.add_argument('log-level=3')
-    browser = wd.Chrome(executable_path='/Users/tianbao/Desktop/glassdoor-review-scraper/chromedriver',options=chrome_options)
+    browser = wd.Chrome(options=chrome_options)
     return browser
 
 
@@ -483,7 +487,7 @@ def main():
             res = write_segment_to_csv(res)
 
     #res.to_csv(args.file, index=False, encoding='utf-8')
-
+    logger.info("Total length {} and limit {}".format(total_len, args.limit))
     end = time.time()
     logger.info(f'Finished in {end - start} seconds')
     browser.quit()
