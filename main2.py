@@ -339,11 +339,15 @@ def more_pages():
         return False
     
 def within_five_years():
-    date_str = browser.find_element_by_css_selector('time.date.subtle.small').text
-    date = dt.datetime.strptime(date_str, '%b %d, %Y')
-    if date < date_cut:
-        logger.info("Records more than five years ago found. Exit")
-    return date > date_cut
+    try:
+        date_str = browser.find_element_by_css_selector('time.date.subtle.small').text
+        date = dt.datetime.strptime(date_str, '%b %d, %Y')
+        if date < date_cut:
+            logger.info("Records more than five years ago found. Exit")
+        return date > date_cut
+    except selenium.common.exceptions.NoSuchElementException:
+        return True
+    
 
 def go_to_next_page():
     logger.info(f'Going to page {page[0] + 1}')
